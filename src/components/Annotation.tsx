@@ -1,8 +1,10 @@
-import React, { Component, FocusEvent, MouseEvent } from 'react';
+import React, { Component, TouchEvent, MouseEvent } from 'react';
 import styled from 'styled-components';
 import compose from '../utils/compose';
 import isMouseHovering from '../utils/isMouseHovering';
-import withRelativeMousePos from '../utils/withRelativeMousePos';
+import withRelativeMousePos, {
+  WithRelativeMousePosProps,
+} from '../utils/withRelativeMousePos';
 
 import defaultProps from './defaultProps';
 import Overlay from './Overlay';
@@ -43,21 +45,21 @@ const Items = styled.div`
 const Target = Items;
 
 interface AnnotationProps {
-  innerRef: () => object;
+  innerRef: (el: HTMLImageElement) => object;
   onMouseUp?: (e: MouseEvent) => void;
   onMouseDown?: (e: MouseEvent) => void;
   onMouseMove?: (e: MouseEvent) => void;
   onClick?: (e: MouseEvent) => void;
   children?: any;
   annotations: IAnnotation[];
-  type?: string;
-  selectors?: ISelector[];
+  type: string;
+  selectors: ISelector[];
 
   value: IAnnotation;
   onChange: (e: IAnnotation) => void;
-  onSubmit: (e: MouseEvent<HTMLDivElement>) => void;
+  onSubmit: (e: IAnnotation) => void;
 
-  activeAnnotationComparator?: (a1: IAnnotation, a2: IAnnotation) => boolean;
+  activeAnnotationComparator: (a1: IAnnotation, a2: IAnnotation) => boolean;
   activeAnnotations?: IAnnotation[];
 
   disableAnnotation?: boolean;
@@ -83,7 +85,11 @@ export default compose(
   isMouseHovering(),
   withRelativeMousePos(),
 )(
-  class Annotation extends Component<AnnotationProps> {
+  class Annotation extends Component<
+    AnnotationProps & WithRelativeMousePosProps
+  > {
+    container: HTMLImageElement;
+
     static defaultProps = defaultProps;
 
     targetRef = React.createRef<any>();
@@ -121,23 +127,26 @@ export default compose(
       }
     }
 
-    setInnerRef = el => {
+    setInnerRef = (el: HTMLImageElement) => {
       this.container = el;
       this.props.relativeMousePos.innerRef(el);
       this.props.innerRef(el);
     };
 
-    getSelectorByType = type => {
-      return this.props.selectors.find(s => s.TYPE === type);
+    getSelectorByType = (type: string): ISelector => {
+      return this.props.selectors.find(s => s.TYPE === type)!;
     };
 
-    getTopAnnotationAt = (x, y) => {
+    getTopAnnotationAt = (
+      x: number = 0,
+      y: number = 0,
+    ): IAnnotation | undefined => {
       const { annotations } = this.props;
       const { container, getSelectorByType } = this;
 
       if (!container) return;
 
-      const intersections = annotations
+      const intersections: IAnnotation[] = annotations
         .map(annotation => {
           const { geometry } = annotation;
           const selector = getSelectorByType(geometry.type);
@@ -147,15 +156,15 @@ export default compose(
             : false;
         })
         .filter(a => !!a)
-        .sort((a, b) => {
+        .sort((a: IAnnotation, b: IAnnotation) => {
           const aSelector = getSelectorByType(a.geometry.type);
           const bSelector = getSelectorByType(b.geometry.type);
 
           return (
-            aSelector.area(a.geometry, container) -
-            bSelector.area(b.geometry, container)
+            aSelector?.area(a.geometry, container) -
+            bSelector?.area(b.geometry, container)
           );
-        });
+        }) as IAnnotation[];
 
       return intersections[0];
     };
@@ -176,29 +185,45 @@ export default compose(
       this.props.relativeMousePos.onTouchLeave(e);
     };
 
-    onMouseUp = e => this.callSelectorMethod('onMouseUp', e);
-    onMouseDown = e => this.callSelectorMethod('onMouseDown', e);
-    onMouseMove = e => this.callSelectorMethod('onMouseMove', e);
-    onTouchStart = e => this.callSelectorMethod('onTouchStart', e);
-    onTouchEnd = e => this.callSelectorMethod('onTouchEnd', e);
-    onTouchMove = e => this.callSelectorMethod('onTouchMove', e);
-    onClick = e => this.callSelectorMethod('onClick', e);
+    onMouseUp = (e: MouseEvent) => this.callSelectorMethod('onMouseUp', e);
+    onMouseDown = (e: MouseEvent) => this.callSelectorMethod('onMouseDown', e);
+    onMouseMove = (e: MouseEvent) => this.callSelectorMethod('onMouseMove', e);
+    onTouchStart = (e: TouchEvent) =>
+      this.callSelectorMethod('onTouchStart', e);
+
+    onTouchEnd = (e: TouchEvent) => this.callSelectorMethod('onTouchEnd', e);
+    onTouchMove = (e: TouchEvent) => this.callSelectorMethod('onTouchMove', e);
+    onClick = (e: MouseEvent) => this.callSelectorMethod('onClick', e);
 
     onSubmit = () => {
       this.props.onSubmit(this.props.value);
     };
 
-    callSelectorMethod = (methodName, e) => {
+    callSelectorMethod = (
+      methodName:
+        | 'onMouseUp'
+        | 'onMouseDown'
+        | 'onMouseMove'
+        | 'onTouchStart'
+        | 'onTouchEnd'
+        | 'onTouchMove'
+        | 'onClick',
+
+      e: MouseEvent | TouchEvent,
+    ) => {
       if (this.props.disableAnnotation) {
         return;
       }
 
       if (!!this.props[methodName]) {
-        this.props[methodName](e);
+        (this.props[methodName] as any)(e);
       } else {
         const selector = this.getSelectorByType(this.props.type);
-        if (selector && selector.methods[methodName]) {
-          const value = selector.methods[methodName](this.props.value, e);
+        if (selector && (selector.methods[methodName] as any)) {
+          const value = (selector.methods[methodName] as any)(
+            this.props.value,
+            e,
+          );
 
           if (typeof value === 'undefined') {
             if (process.env.NODE_ENV !== 'production') {
@@ -214,7 +239,10 @@ export default compose(
       }
     };
 
-    shouldAnnotationBeActive = (annotation, top) => {
+    shouldAnnotationBeActive = (
+      annotation: IAnnotation,
+      top: IAnnotation | undefined,
+    ) => {
       if (this.props.activeAnnotations) {
         const isActive = !!this.props.activeAnnotations.find(active =>
           this.props.activeAnnotationComparator(annotation, active),

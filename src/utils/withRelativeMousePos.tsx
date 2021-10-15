@@ -1,20 +1,24 @@
-import React, { Component, ComponentType, FunctionComponent } from 'react';
+import React, { Component, ComponentType, MouseEvent, TouchEvent } from 'react';
 import { getOffsetCoordPercentage } from './offsetCoordinates';
 
-export interface WithRelativeMousePosProps {
+export interface ElementDetails {
   innerRef: (el: HTMLImageElement) => void;
   onMouseMove: (e: MouseEvent) => void;
   onMouseLeave: (e: MouseEvent) => void;
   onTouchMove: (e: TouchEvent) => void;
   onTouchLeave: (e: TouchEvent) => void;
-  x: number | null;
-  y: number | null;
+  x: number;
+  y: number;
+}
+
+export interface WithRelativeMousePosProps {
+  [key: string]: ElementDetails;
 }
 const withRelativeMousePos =
   <T extends {}>(key = 'relativeMousePos') =>
-  (DecoratedComponent: ComponentType<T & WithRelativeMousePosProps>) => {
+  (DecoratedComponent: ComponentType<T>) => {
     class WithRelativeMousePos extends Component<T> {
-      state = { x: null, y: null };
+      state = { x: 0, y: 0 };
       container: HTMLImageElement;
 
       innerRef = (el: HTMLImageElement) => {
@@ -51,7 +55,7 @@ const withRelativeMousePos =
       };
 
       render() {
-        const props: WithRelativeMousePosProps = {
+        const props = {
           innerRef: this.innerRef,
           onMouseMove: this.onMouseMove,
           onMouseLeave: this.onMouseLeave,
@@ -60,7 +64,7 @@ const withRelativeMousePos =
           x: this.state.x,
           y: this.state.y,
         };
-        const hocProps = {
+        const hocProps: WithRelativeMousePosProps = {
           [key]: props,
         };
 
@@ -68,7 +72,7 @@ const withRelativeMousePos =
       }
     }
 
-    WithRelativeMousePos.displayName = `withRelativeMousePos(${DecoratedComponent.displayName})`;
+    // WithRelativeMousePos.displayName = `withRelativeMousePos(${DecoratedComponent.displayName})`;
 
     return WithRelativeMousePos;
   };

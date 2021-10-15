@@ -12,6 +12,7 @@ export interface IGeometry {
   height: number;
   width: number;
 }
+
 export interface ISelector {
   TYPE: string;
   intersects: (
@@ -27,6 +28,9 @@ export interface ISelector {
     onMouseUp?: (annotation: IAnnotation, e: any) => IAnnotation | {};
     onMouseDown?: (annotation: IAnnotation, e: any) => IAnnotation | {};
     onMouseMove?: (annotation: IAnnotation, e: any) => IAnnotation | {};
+    onTouchStart?: (annotation: IAnnotation, e: any) => IAnnotation | {};
+    onTouchEnd?: (annotation: IAnnotation, e: any) => IAnnotation | {};
+    onTouchMove?: (annotation: IAnnotation, e: any) => IAnnotation | {};
     onClick?: (annotation: IAnnotation, e: any) => IAnnotation | {};
   };
 }
