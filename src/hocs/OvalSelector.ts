@@ -61,7 +61,6 @@ function pointerDown(annotation: IAnnotation, e: TouchEvent | MouseEvent) {
   } else {
     return {};
   }
-  return annotation;
 }
 
 function pointerUp(annotation: IAnnotation, e: TouchEvent | MouseEvent) {

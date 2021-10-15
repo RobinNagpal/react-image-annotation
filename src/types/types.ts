@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 export interface IPoint {
   x: number;
   y: number;
@@ -41,4 +43,30 @@ export interface IAnnotation {
     text: string;
     id?: number;
   };
+}
+
+export interface RenderEditorProps {
+  annotation: IAnnotation;
+  onChange: (a: IAnnotation) => void;
+  onSubmit: (e: MouseEvent<HTMLDivElement>) => void;
+}
+
+export interface RenderContentProps {
+  key?: number;
+  annotation: IAnnotation;
+}
+
+export interface RenderOverlayProps {
+  type?: string;
+  annotation: IAnnotation;
+}
+
+export interface RenderHighlightProps {
+  key?: number;
+  active?: boolean;
+  annotation: IAnnotation;
+}
+
+export interface RenderSelectorProps {
+  annotation: IAnnotation;
 }

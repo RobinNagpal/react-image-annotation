@@ -1,8 +1,7 @@
-import React from 'react'
-import styled from 'styled-components'
+import styled from 'styled-components';
 
 export default styled.div`
-  background: rgba(0, 0, 0, .4);
+  background: rgba(0, 0, 0, 0.4);
   border-radius: 5px;
   bottom: 4px;
   color: white;
@@ -15,4 +14,4 @@ export default styled.div`
   right: 4px;
   transition: opacity 0.21s ease-in-out;
   user-select: none;
-`
+`;
